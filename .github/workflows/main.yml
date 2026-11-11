@@ -1,0 +1,439 @@
+name: Build binary
+
+on:
+  workflow_dispatch
+  # schedule:
+  #  - cron: '5 5 * * *'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  REDLIB_ROOT_DIR: /tmp/redlib
+  REDLIB_BIN_NAME: redlib
+  REDLIB_REPO: https://github.com/mycodedoesnotcompile2/redlib_nachtalb_forked.git
+  APT: sudo apt -y -qq -o=Dpkg::Use-Pty=0
+  CHOCO: choco install -y -r --no-progress
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    outputs:
+      REDLIB_PREBUILT_LATEST_TAG: ${{ steps.release_latest_tag.outputs.REDLIB_PREBUILT_LATEST_TAG }}
+      REDLIB_CURRENT_COMMIT_ID: ${{ steps.release_commit_id.outputs.REDLIB_CURRENT_COMMIT_ID }}
+      REDLIB_VERSION: ${{ steps.release_version.outputs.REDLIB_VERSION }}
+
+    steps:
+      - name: Get latest release tag of this repo
+        id: release_latest_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd /tmp/
+
+          REDLIB_PREBUILT_LATEST_TAG=$(gh release list \
+            -R mycodedoesnotcompile2/redlib_nachtalb_fork \
+            --json tagName \
+            -L 1 \
+            --jq '.[].tagName' \
+            --exclude-drafts \
+            --exclude-pre-releases)
+
+          echo "REDLIB_PREBUILT_LATEST_TAG=$REDLIB_PREBUILT_LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "REDLIB_PREBUILT_LATEST_TAG=$REDLIB_PREBUILT_LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Clone repo and check if there is a new and uncompiled yet version
+        id: release_commit_id
+        run: |
+          cd /tmp/
+          git clone --depth=1 "$REDLIB_REPO" "$REDLIB_BIN_NAME"
+          
+          cd "$REDLIB_ROOT_DIR"
+          REDLIB_CURRENT_COMMIT_ID=$(git rev-parse --short HEAD)
+          echo "REDLIB_CURRENT_COMMIT_ID=$REDLIB_CURRENT_COMMIT_ID" >> $GITHUB_ENV
+          echo "REDLIB_CURRENT_COMMIT_ID=$REDLIB_CURRENT_COMMIT_ID" >> $GITHUB_OUTPUT
+
+          # case: no new commit => abort the workflow
+          if [[ $REDLIB_PREBUILT_LATEST_TAG == $REDLIB_CURRENT_COMMIT_ID ]]; then
+            echo "[!] No new version to compile"
+            exit 100
+          fi
+
+      - name: Get version
+        id: release_version_cargo_get
+        uses: nicolaiunrein/cargo-get@master
+        with:
+          subcommand: package.version
+          options: --entry "$REDLIB_ROOT_DIR/Cargo.toml"
+
+      - name: Set REDLIB_VERSION build variable
+        id: release_version
+        run: |
+          REDLIB_VERSION=${{ steps.release_version_cargo_get.outputs.metadata }}
+          echo "REDLIB_VERSION=$REDLIB_VERSION" >> $GITHUB_OUTPUT
+
+
+  build:
+    needs: checkout
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:         
+          # ============================================================
+          # x86_64 Linux
+          # ============================================================
+
+          - TARGET: x86_64-unknown-linux-musl
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+
+          - TARGET: x86_64-unknown-linux-gnu
+            OS: ubuntu-22.04
+
+          # # ============================================================
+          # # i686 Linux
+          # # ============================================================
+
+          # - TARGET: i686-unknown-linux-gnu
+          #   OS: ubuntu-latest
+          #   CC_PKG: gcc-multilib g++-multilib
+            
+          # - TARGET: i686-unknown-linux-musl
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+          #   CC_PKG: gcc-multilib g++-multilib
+            
+
+          # # ============================================================
+          # # ARM64 Linux
+          # # ============================================================
+
+          # - TARGET: aarch64-unknown-linux-musl
+          #   OS: ubuntu-24.04-arm
+          #   CC_COMPILER: cross
+            
+          # - TARGET: aarch64-unknown-linux-gnu
+          #   OS: ubuntu-24.04-arm
+            
+          # # ============================================================
+          # # ARMv7 Linux
+          # # ============================================================
+
+          # - TARGET: armv7-unknown-linux-musleabihf
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+            
+          # - TARGET: armv7-unknown-linux-gnueabihf
+          #   OS: ubuntu-latest
+          #   CC_PKG: crossbuild-essential-armhf
+            
+          # # ============================================================
+          # # ARM Linux
+          # # ============================================================
+
+          # - TARGET: arm-unknown-linux-musleabihf
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+            
+          # - TARGET: arm-unknown-linux-gnueabihf
+          #   OS: ubuntu-latest
+          #   CC_PKG: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+            
+          # - TARGET: arm-unknown-linux-musleabi
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+
+          # # ============================================================
+          # # Apple
+          # # ============================================================
+
+          # - TARGET: aarch64-apple-darwin
+          #   OS: macos-latest
+            
+          # - TARGET: x86_64-apple-darwin
+          #   OS: macos-26-intel
+            
+          # # ============================================================
+          # # Windows
+          # # ============================================================
+
+          # - TARGET: x86_64-pc-windows-msvc
+          #   OS: windows-latest
+            
+          # - TARGET: x86_64-pc-windows-gnu
+          #   OS: windows-latest
+            
+          # - TARGET: aarch64-pc-windows-msvc
+          #   OS: windows-11-arm
+            
+          # - TARGET: i686-pc-windows-msvc
+          #   OS: windows-latest
+            
+          # - TARGET: i686-pc-windows-gnu
+          #   OS: ubuntu-latest
+          #   CC_PKG: gcc-mingw-w64-i686 nasm
+            
+
+          # # ============================================================
+          # # FreeBSD
+          # # ============================================================
+
+          # - TARGET: x86_64-unknown-freebsd
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+            
+          # # ============================================================
+          # # RISC-V
+          # # ============================================================
+
+          # - TARGET: riscv64gc-unknown-linux-gnu
+          #   OS: ubuntu-latest
+          #   CC_PKG: gcc-riscv64-linux-gnu
+            
+          # - TARGET: riscv64gc-unknown-linux-musl
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+            
+          # # ============================================================
+          # # PowerPC
+          # # ============================================================
+
+          # - TARGET: powerpc64le-unknown-linux-gnu
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+
+          # - TARGET: powerpc64-unknown-linux-gnu
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+
+          # # ============================================================
+          # # Android
+          # # ============================================================
+
+          # - TARGET: aarch64-linux-android
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+            
+          # - TARGET: armv7-linux-androideabi
+          #   OS: ubuntu-latest
+          #   CC_COMPILER: cross
+
+          # # ============================================================
+          # # MIPS
+          # # ============================================================
+
+          # - TARGET: mips64el-unknown-linux-gnuabi64
+          #   OS: ubuntu-24.04
+          #   CC_PKG: gcc-mips64el-linux-gnuabi64 g++-mips64el-linux-gnuabi64 binutils-mips64el-linux-gnuabi64
+          #   CC_COMPILER: cross
+          
+          # - TARGET: mips64el-unknown-linux-muslabi64
+          #   OS: ubuntu-24.04
+          #   CC_COMPILER: cross
+
+    runs-on: ${{ matrix.OS }}
+
+    container:
+      image: ${{ matrix.CONTAINER }}
+
+    env:
+      TARGET: ${{ matrix.TARGET }}
+      OS: ${{ matrix.OS }}
+      CONTAINER: ${{ matrix.CONTAINER }}
+      CC_PKG: ${{ matrix.CC_PKG }}
+      CC_COMPILER: ${{ matrix.CC_COMPILER }}
+      CROSS_CONFIG: /tmp/cross.toml
+
+      REDLIB_PREBUILT_LATEST_TAG: ${{ needs.checkout.outputs.REDLIB_PREBUILT_LATEST_TAG }}
+      REDLIB_VERSION: ${{ needs.checkout.outputs.REDLIB_VERSION }}
+
+    steps:
+      - name: Clone repo
+        run: |
+          cd /tmp/
+          git clone --depth=1 "$REDLIB_REPO" "$REDLIB_BIN_NAME"
+
+      - name: Install and configure dependencies
+        run: |
+          if [[ $OS == windows* ]]; then
+            $CHOCO wget
+          fi
+
+          if [[ $OS == ubuntu* ]]; then
+            $APT update
+            #$APT install libssl-dev pkg-config
+          fi
+
+          # for musl builds
+          if [[ $TARGET == *"-musl"* ]]; then
+            $APT install musl-tools
+          fi
+
+          # for everything else
+          if [[ -n "${CC_PKG:-}" ]]; then
+            $APT install $CC_PKG
+          fi
+
+          # for arm targets
+          if [[ $TARGET == "arm"* ]]; then
+            cd "$REDLIB_ROOT_DIR"
+            cargo install --force --locked bindgen-cli
+          fi
+
+          cargo install cross
+
+          wget -nv "https://github.com/mycodedoesnotcompile2/rust_compile_config_files/raw/refs/heads/main/cross.toml" -O "$CROSS_CONFIG"
+          wget -nv "https://github.com/mycodedoesnotcompile2/rust_compile_config_files/raw/refs/heads/main/config.toml" -O ~/.cargo/config.toml
+
+      - name: Install rust target
+        run: |
+          if [[ $TARGET == "mips"* ]]; then
+            rustup toolchain install nightly
+            rustup component add rust-src --toolchain nightly
+          else
+            rustup target add $TARGET
+          fi
+
+      # - name: Patch stuff in Cargo.toml
+      #   run: |
+      #     cd "$REDLIB_ROOT_DIR"
+
+      #     #sed -Ei 's/^([[:space:]]*rustls[[:space:]]*=[[:space:]]*)"([^"]+)"[[:space:]]*$/\1{ version = "\2", features = ["dangerous_configuration"] }/' cli/Cargo.toml
+      #     #sed -E -i '' 's/^([[:space:]]*rustls[[:space:]]*=[[:space:]]*)"([^"]+)"[[:space:]]*$/\1{ version = "\2", features = ["dangerous_configuration"] }/' cli/Cargo.toml
+      #     grep -i "rustls" cli/Cargo.toml
+
+      #     # Only OpenSSL/native-tls builds need the native-tls vendored patch.
+      #     if [[ "$TLS" == "openssl" ]] && \
+      #        [[ $TARGET == *"-musl"* || \
+      #           $TARGET == "arm"* || \
+      #           $TARGET == "risc"* || \
+      #           $TARGET == "mips"* || \
+      #           $TARGET == "powerpc"* || \
+      #           $TARGET == *"android" || \
+      #           $TARGET = i*86-unknown-linux-gnu ]]; then
+
+      #       sed -Ei \
+      #         -e 's|^native-tls = "([^"]+)"$|native-tls = { version = "\1", features = ["vendored"] }|' \
+      #         -e 's|^native-tls = \{(.*)\}$|native-tls = {\1, features = ["vendored"]}|' \
+      #         crates/collector/Cargo.toml
+      #       grep -R 'vendored' -n .
+      #     fi
+
+      - name: Patch lto in Cargo.toml for mips
+        run: |
+          if [[ $TARGET == "mips"* ]]; then
+            cd "$REDLIB_ROOT_DIR"
+            sed -i 's/^[[:space:]]*lto[[:space:]]*=.*/lto = false/' Cargo.toml
+            grep -i lto Cargo.toml
+          fi
+
+      - name: Run build
+        run: |
+          cd "$REDLIB_ROOT_DIR"
+
+          if [[ -z "${CC_COMPILER:-}" ]]; then
+            CC_COMPILER="cargo"
+          fi
+
+          BUILD_ARGS=(build -p "$REDLIB_BIN_NAME" --release --target "$TARGET")
+
+          # # OpenSSL/native-tls build
+          # if [[ "$TLS" == "openssl" ]]; then
+          #   BUILD_ARGS+=(--no-default-features --features tls-native)
+          # fi
+
+          echo "=========================================="
+          echo "Building:"
+          echo "  Target: $TARGET"
+          echo "  Args:   ${BUILD_ARGS[*]}"
+          echo "=========================================="
+
+          if [[ $TARGET == "mips"* ]]; then
+            RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-mxgot" \
+              $CC_COMPILER +nightly \
+              "${BUILD_ARGS[@]}" \
+              -Z build-std=std,panic_abort,compiler_builtins \
+              -v
+          else
+            $CC_COMPILER "${BUILD_ARGS[@]}"
+          fi
+
+      - name: List build information
+        run: |
+          OLD_REDLIB_BIN_DIR="$REDLIB_ROOT_DIR/target/$TARGET/release"
+          OLD_REDLIB_BIN_PATH="$OLD_REDLIB_BIN_DIR/$REDLIB_BIN_NAME"
+
+          ls -alh "$OLD_REDLIB_BIN_DIR"
+
+          if [[ $TARGET == *-windows-* ]]; then
+            OLD_REDLIB_BIN_PATH="$OLD_REDLIB_BIN_DIR/$REDLIB_BIN_NAME.exe"
+          fi
+
+          REDLIB_BIN_PATH="${{ runner.temp }}/$REDLIB_BIN_NAME-$REDLIB_VERSION-$TARGET"
+
+          if [[ $OS == windows* || $TARGET == *-windows-* ]]; then
+            REDLIB_BIN_PATH="${{ runner.temp }}/$REDLIB_BIN_NAME-$REDLIB_VERSION-$TARGET.exe"
+          fi
+
+          REDLIB_BIN_HASH_PATH="$REDLIB_BIN_PATH.sha256.txt"
+          cp -f "$OLD_REDLIB_BIN_PATH" "$REDLIB_BIN_PATH"
+          ls -alh "$REDLIB_BIN_PATH"
+          cd "$(dirname "$REDLIB_BIN_PATH")"
+          sha256sum --tag "$(basename "$REDLIB_BIN_PATH")" | tee "$REDLIB_BIN_HASH_PATH"
+          ldd "$REDLIB_BIN_PATH" || true
+          "$REDLIB_BIN_PATH" -h || true
+
+          echo "REDLIB_BIN_PATH=$REDLIB_BIN_PATH" >> $GITHUB_ENV
+          echo "REDLIB_BIN_HASH_PATH=$REDLIB_BIN_HASH_PATH" >> $GITHUB_ENV
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary-${{ matrix.TARGET }}
+          path: |
+            ${{ env.REDLIB_BIN_PATH }}
+            ${{ env.REDLIB_BIN_HASH_PATH }}
+
+  deploy_release:
+    needs: [checkout, build]
+    runs-on: ubuntu-latest
+    env:
+      REDLIB_CURRENT_COMMIT_ID: ${{ needs.checkout.outputs.REDLIB_CURRENT_COMMIT_ID }}
+      REDLIB_VERSION: ${{ needs.checkout.outputs.REDLIB_VERSION }}
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v8
+        with:
+          pattern: binary-*
+          merge-multiple: true
+          path: /tmp/results
+
+      - name: List target
+        run: |
+          cd "/tmp/results"
+          ls -alh
+          RELEASE_NOTES="/tmp/release_notes.txt"
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+          
+          cat *.sha256.txt > "$RELEASE_NOTES"
+          sha256sum -c *.sha256.txt
+          
+          mkdir -p "/tmp/hashes"
+          mv -f *.sha256.txt "/tmp/hashes/"
+
+      - name: Create a new Github release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 #v3.0.2
+        with:
+          make_latest: true
+          body_path: ${{ env.RELEASE_NOTES }}
+          name: version ${{ env.REDLIB_VERSION }} - build ${{ env.REDLIB_CURRENT_COMMIT_ID }}
+          tag_name: ${{ env.REDLIB_CURRENT_COMMIT_ID }}
+          files: |
+            /tmp/results/${{ env.REDLIB_BIN_NAME }}-*
