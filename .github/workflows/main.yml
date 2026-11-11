@@ -37,7 +37,7 @@ jobs:
           cd /tmp/
 
           REDLIB_PREBUILT_LATEST_TAG=$(gh release list \
-            -R mycodedoesnotcompile2/redlib_nachtalb_fork \
+            -R mycodedoesnotcompile2/redlib_nachtalb_forked \
             --json tagName \
             -L 1 \
             --jq '.[].tagName' \
