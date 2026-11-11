@@ -234,12 +234,13 @@ fn pick(weights: &[u32], current: usize) -> usize {
 }
 
 fn client_for(profile: Profile, platform: Platform) -> WreqClient {
-	WreqClient::builder()
-		.emulation(Emulation::builder().profile(profile).platform(platform).build())
-		.redirect(Policy::none())
-		.dns_resolver(RedgifsIpv4Resolver)
-		.build()
-		.expect("Should always be able to build a client")
+    WreqClient::builder()
+        .emulation(Emulation::builder().profile(profile).platform(platform).build())
+        .redirect(Policy::none())
+        .dns_resolver(RedgifsIpv4Resolver)
+        .tls_cert_verification(!ACCEPT_INVALID_CERTS.load(Ordering::Relaxed))
+        .build()
+        .expect("Should always be able to build a client")
 }
 
 /// Builds a client with another, weighted random browser emulation.
