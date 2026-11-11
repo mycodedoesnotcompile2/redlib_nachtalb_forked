@@ -186,6 +186,13 @@ async fn main() {
 				.default_value(setting_or("REDLIB_HSTS", "604800"))
 				.num_args(1),
 		)
+		.arg(
+    		Arg::new("insecure")
+        		.short('k')
+        		.long("insecure")
+        		.help("Accept invalid TLS certificates (INSECURE, debugging only)")
+        		.action(ArgAction::SetTrue),
+		)
 		.get_matches();
 
 	redlib::backends::log_orders();
@@ -228,6 +235,10 @@ async fn main() {
 	info!("Evaluating instance info.");
 	LazyLock::force(&instance_info::INSTANCE_INFO);
 	info!("Creating OAUTH client.");
+	redlib::client::ACCEPT_INVALID_CERTS.store(
+    	matches.get_flag("insecure"),
+    	std::sync::atomic::Ordering::Relaxed,
+	);
 	LazyLock::force(&OAUTH_CLIENT);
 
 	// Define default headers (added to all responses)
