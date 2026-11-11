@@ -73,6 +73,9 @@ pub fn burn_rate_limit_unit() {
 
 pub static OAUTH_IS_ROLLING_OVER: AtomicBool = AtomicBool::new(false);
 
+/// Whether to accept invalid TLS certificates (debugging only).
+pub static ACCEPT_INVALID_CERTS: AtomicBool = AtomicBool::new(false);
+
 const URL_PAIRS: [(&str, &str); 2] = [
 	(ALTERNATIVE_REDDIT_URL_BASE, ALTERNATIVE_REDDIT_URL_BASE_HOST),
 	(REDDIT_SHORT_URL_BASE, REDDIT_SHORT_URL_BASE_HOST),
