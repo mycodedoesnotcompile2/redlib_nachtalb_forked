@@ -388,7 +388,7 @@ jobs:
           sha256sum --tag "$(basename "$REDLIB_BIN_PATH")" | tee "$REDLIB_BIN_HASH_PATH"
           ldd --version | head -n1 || true
           ldd "$REDLIB_BIN_PATH" || true
-          "$REDLIB_BIN_PATH" -h || true
+          "$REDLIB_BIN_PATH" --help || true
 
           echo "REDLIB_BIN_PATH=$REDLIB_BIN_PATH" >> $GITHUB_ENV
           echo "REDLIB_BIN_HASH_PATH=$REDLIB_BIN_HASH_PATH" >> $GITHUB_ENV
