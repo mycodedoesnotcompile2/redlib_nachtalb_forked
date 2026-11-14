@@ -152,6 +152,7 @@ async fn main() {
     let matches = Command::new("Redlib")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Private front-end for Reddit written in Rust")
+		.disable_help_flag(false)
         .arg(
             Arg::new("ipv4-only")
                 .short('4')
