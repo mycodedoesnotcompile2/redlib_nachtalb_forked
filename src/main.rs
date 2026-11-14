@@ -133,68 +133,91 @@ async fn style() -> Result<Response<Body>, String> {
 
 #[tokio::main]
 async fn main() {
-	// Load environment variables
-	_ = dotenvy::dotenv();
+    // Load environment variables first
+    _ = dotenvy::dotenv();
 
-	// Initialize logger
-	pretty_env_logger::init();
+    // The listener settings can also come from REDLIB_* settings
+    // (environment variables or redlib.toml).
+    let setting_or = |key: &str, default: &str| -> &'static str {
+        config::get_setting(key)
+            .unwrap_or_else(|| default.to_string())
+            .leak()
+    };
 
-	// The listener settings can also come from `REDLIB_*` settings (env or
-	// redlib.toml); the flags and the older env names take precedence.
-	let setting_or = |key: &str, default: &str| -> &'static str { config::get_setting(key).unwrap_or_else(|| default.to_string()).leak() };
-	let setting_on = |key: &str| config::get_setting(key).as_deref() == Some("on");
+    let setting_on = |key: &str| {
+        config::get_setting(key).as_deref() == Some("on")
+    };
 
-	let matches = Command::new("Redlib")
-		.version(env!("CARGO_PKG_VERSION"))
-		.about("Private front-end for Reddit written in Rust ")
-		.arg(Arg::new("ipv4-only").short('4').long("ipv4-only").help("Listen on IPv4 only").num_args(0))
-		.arg(Arg::new("ipv6-only").short('6').long("ipv6-only").help("Listen on IPv6 only").num_args(0))
-		.arg(
-			Arg::new("redirect-https")
-				.short('r')
-				.long("redirect-https")
-				.help("Redirect all HTTP requests to HTTPS (no longer functional)")
-				.num_args(0),
-		)
-		.arg(
-			Arg::new("address")
-				.short('a')
-				.long("address")
-				.value_name("ADDRESS")
-				.help("Sets address to listen on")
-				.default_value(setting_or("REDLIB_LISTEN_ADDRESS", "[::]"))
-				.num_args(1),
-		)
-		.arg(
-			Arg::new("port")
-				.short('p')
-				.long("port")
-				.value_name("PORT")
-				.env("PORT")
-				.help("Port to listen on")
-				.default_value(setting_or("REDLIB_LISTEN_PORT", "8080"))
-				.value_parser(clap::value_parser!(u16))
-				.action(ArgAction::Set)
-				.num_args(1),
-		)
-		.arg(
-			Arg::new("hsts")
-				.short('H')
-				.long("hsts")
-				.value_name("EXPIRE_TIME")
-				.help("HSTS header to tell browsers that this site should only be accessed over HTTPS")
-				.default_value(setting_or("REDLIB_HSTS", "604800"))
-				.num_args(1),
-		)
-		.arg(
-    		Arg::new("insecure")
-        		.short('k')
-        		.long("insecure")
-        		.help("Accept invalid TLS certificates (INSECURE, debugging only)")
-        		.action(ArgAction::SetTrue),
-		)
-		.get_matches();
+    // Parse command-line arguments
+    let matches = Command::new("Redlib")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("Private front-end for Reddit written in Rust")
+        .arg(
+            Arg::new("ipv4-only")
+                .short('4')
+                .long("ipv4-only")
+                .help("Listen on IPv4 only")
+                .num_args(0),
+        )
+        .arg(
+            Arg::new("ipv6-only")
+                .short('6')
+                .long("ipv6-only")
+                .help("Listen on IPv6 only")
+                .num_args(0),
+        )
+        .arg(
+            Arg::new("redirect-https")
+                .short('r')
+                .long("redirect-https")
+                .help("Redirect all HTTP requests to HTTPS (no longer functional)")
+                .num_args(0),
+        )
+        .arg(
+            Arg::new("address")
+                .short('a')
+                .long("address")
+                .value_name("ADDRESS")
+                .help("Sets address to listen on")
+                .default_value(setting_or("REDLIB_LISTEN_ADDRESS", "[::]"))
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("port")
+                .short('p')
+                .long("port")
+                .value_name("PORT")
+                .env("PORT")
+                .help("Port to listen on")
+                .default_value(setting_or("REDLIB_LISTEN_PORT", "8080"))
+                .value_parser(clap::value_parser!(u16))
+                .action(ArgAction::Set)
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("hsts")
+                .short('H')
+                .long("hsts")
+                .value_name("EXPIRE_TIME")
+                .help("HSTS header to tell browsers that this site should only be accessed over HTTPS")
+                .default_value(setting_or("REDLIB_HSTS", "604800"))
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("insecure")
+                .short('k')
+                .long("insecure")
+                .help("Accept invalid TLS certificates (INSECURE, debugging only)")
+                .action(ArgAction::SetTrue),
+        )
+        .get_matches();
 
+    // Initialize logger only after argument parsing
+    pretty_env_logger::init();
+
+    // Continue with original application initialization
+    redlib::backends::log_orders();
+	
 	redlib::backends::log_orders();
 
 	let address = matches.get_one::<String>("address").unwrap();
