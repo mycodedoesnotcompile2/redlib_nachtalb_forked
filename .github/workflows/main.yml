@@ -96,146 +96,146 @@ jobs:
           - TARGET: x86_64-unknown-linux-gnu
             OS: ubuntu-22.04
 
-          # # ============================================================
-          # # i686 Linux
-          # # ============================================================
+          # ============================================================
+          # i686 Linux
+          # ============================================================
 
-          # - TARGET: i686-unknown-linux-gnu
-          #   OS: ubuntu-latest
-          #   CC_PKG: gcc-multilib g++-multilib
+          - TARGET: i686-unknown-linux-gnu
+            OS: ubuntu-latest
+            CC_PKG: gcc-multilib g++-multilib
             
-          # - TARGET: i686-unknown-linux-musl
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-          #   CC_PKG: gcc-multilib g++-multilib
-            
-
-          # # ============================================================
-          # # ARM64 Linux
-          # # ============================================================
-
-          # - TARGET: aarch64-unknown-linux-musl
-          #   OS: ubuntu-24.04-arm
-          #   CC_COMPILER: cross
-            
-          # - TARGET: aarch64-unknown-linux-gnu
-          #   OS: ubuntu-24.04-arm
-            
-          # # ============================================================
-          # # ARMv7 Linux
-          # # ============================================================
-
-          # - TARGET: armv7-unknown-linux-musleabihf
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-            
-          # - TARGET: armv7-unknown-linux-gnueabihf
-          #   OS: ubuntu-latest
-          #   CC_PKG: crossbuild-essential-armhf
-            
-          # # ============================================================
-          # # ARM Linux
-          # # ============================================================
-
-          # - TARGET: arm-unknown-linux-musleabihf
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-            
-          # - TARGET: arm-unknown-linux-gnueabihf
-          #   OS: ubuntu-latest
-          #   CC_PKG: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
-            
-          # - TARGET: arm-unknown-linux-musleabi
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-
-          # # ============================================================
-          # # Apple
-          # # ============================================================
-
-          # - TARGET: aarch64-apple-darwin
-          #   OS: macos-latest
-            
-          # - TARGET: x86_64-apple-darwin
-          #   OS: macos-26-intel
-            
-          # # ============================================================
-          # # Windows
-          # # ============================================================
-
-          # - TARGET: x86_64-pc-windows-msvc
-          #   OS: windows-latest
-            
-          # - TARGET: x86_64-pc-windows-gnu
-          #   OS: windows-latest
-            
-          # - TARGET: aarch64-pc-windows-msvc
-          #   OS: windows-11-arm
-            
-          # - TARGET: i686-pc-windows-msvc
-          #   OS: windows-latest
-            
-          # - TARGET: i686-pc-windows-gnu
-          #   OS: ubuntu-latest
-          #   CC_PKG: gcc-mingw-w64-i686 nasm
+          - TARGET: i686-unknown-linux-musl
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+            CC_PKG: gcc-multilib g++-multilib
             
 
-          # # ============================================================
-          # # FreeBSD
-          # # ============================================================
+          # ============================================================
+          # ARM64 Linux
+          # ============================================================
 
-          # - TARGET: x86_64-unknown-freebsd
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
+          - TARGET: aarch64-unknown-linux-musl
+            OS: ubuntu-24.04-arm
+            CC_COMPILER: cross
             
-          # # ============================================================
-          # # RISC-V
-          # # ============================================================
-
-          # - TARGET: riscv64gc-unknown-linux-gnu
-          #   OS: ubuntu-latest
-          #   CC_PKG: gcc-riscv64-linux-gnu
+          - TARGET: aarch64-unknown-linux-gnu
+            OS: ubuntu-24.04-arm
             
-          # - TARGET: riscv64gc-unknown-linux-musl
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
+          # ============================================================
+          # ARMv7 Linux
+          # ============================================================
+
+          - TARGET: armv7-unknown-linux-musleabihf
+            OS: ubuntu-latest
+            CC_COMPILER: cross
             
-          # # ============================================================
-          # # PowerPC
-          # # ============================================================
-
-          # - TARGET: powerpc64le-unknown-linux-gnu
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-
-          # - TARGET: powerpc64-unknown-linux-gnu
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
-
-          # # ============================================================
-          # # Android
-          # # ============================================================
-
-          # - TARGET: aarch64-linux-android
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
+          - TARGET: armv7-unknown-linux-gnueabihf
+            OS: ubuntu-latest
+            CC_PKG: crossbuild-essential-armhf
             
-          # - TARGET: armv7-linux-androideabi
-          #   OS: ubuntu-latest
-          #   CC_COMPILER: cross
+          # ============================================================
+          # ARM Linux
+          # ============================================================
 
-          # # ============================================================
-          # # MIPS
-          # # ============================================================
+          - TARGET: arm-unknown-linux-musleabihf
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+            
+          - TARGET: arm-unknown-linux-gnueabihf
+            OS: ubuntu-latest
+            CC_PKG: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+            
+          - TARGET: arm-unknown-linux-musleabi
+            OS: ubuntu-latest
+            CC_COMPILER: cross
 
-          # - TARGET: mips64el-unknown-linux-gnuabi64
-          #   OS: ubuntu-24.04
-          #   CC_PKG: gcc-mips64el-linux-gnuabi64 g++-mips64el-linux-gnuabi64 binutils-mips64el-linux-gnuabi64
-          #   CC_COMPILER: cross
+          # ============================================================
+          # Apple
+          # ============================================================
+
+          - TARGET: aarch64-apple-darwin
+            OS: macos-latest
+            
+          - TARGET: x86_64-apple-darwin
+            OS: macos-26-intel
+            
+          # ============================================================
+          # Windows
+          # ============================================================
+
+          - TARGET: x86_64-pc-windows-msvc
+            OS: windows-latest
+            
+          - TARGET: x86_64-pc-windows-gnu
+            OS: windows-latest
+            
+          - TARGET: aarch64-pc-windows-msvc
+            OS: windows-11-arm
+            
+          - TARGET: i686-pc-windows-msvc
+            OS: windows-latest
+            
+          - TARGET: i686-pc-windows-gnu
+            OS: ubuntu-latest
+            CC_PKG: gcc-mingw-w64-i686 nasm
+            
+
+          # ============================================================
+          # FreeBSD
+          # ============================================================
+
+          - TARGET: x86_64-unknown-freebsd
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+            
+          # ============================================================
+          # RISC-V
+          # ============================================================
+
+          - TARGET: riscv64gc-unknown-linux-gnu
+            OS: ubuntu-latest
+            CC_PKG: gcc-riscv64-linux-gnu
+            
+          - TARGET: riscv64gc-unknown-linux-musl
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+            
+          # ============================================================
+          # PowerPC
+          # ============================================================
+
+          - TARGET: powerpc64le-unknown-linux-gnu
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+
+          - TARGET: powerpc64-unknown-linux-gnu
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+
+          # ============================================================
+          # Android
+          # ============================================================
+
+          - TARGET: aarch64-linux-android
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+            
+          - TARGET: armv7-linux-androideabi
+            OS: ubuntu-latest
+            CC_COMPILER: cross
+
+          # ============================================================
+          # MIPS
+          # ============================================================
+
+          - TARGET: mips64el-unknown-linux-gnuabi64
+            OS: ubuntu-24.04
+            CC_PKG: gcc-mips64el-linux-gnuabi64 g++-mips64el-linux-gnuabi64 binutils-mips64el-linux-gnuabi64
+            CC_COMPILER: cross
           
-          # - TARGET: mips64el-unknown-linux-muslabi64
-          #   OS: ubuntu-24.04
-          #   CC_COMPILER: cross
+          - TARGET: mips64el-unknown-linux-muslabi64
+            OS: ubuntu-24.04
+            CC_COMPILER: cross
 
     runs-on: ${{ matrix.OS }}
 
