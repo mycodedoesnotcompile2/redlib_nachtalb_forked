@@ -216,8 +216,6 @@ async fn main() {
     pretty_env_logger::init();
 
     // Continue with original application initialization
-    redlib::backends::log_orders();
-	
 	redlib::backends::log_orders();
 
 	let address = matches.get_one::<String>("address").unwrap();
