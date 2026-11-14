@@ -153,6 +153,13 @@ async fn main() {
         .version(env!("CARGO_PKG_VERSION"))
         .about("Private front-end for Reddit written in Rust")
 		.disable_help_flag(false)
+		.arg(
+			Arg::new("help")
+			.short('h')
+			.long("help")
+			.help("Print help information")
+			.action(ArgAction::Help),
+		)
         .arg(
             Arg::new("ipv4-only")
                 .short('4')
