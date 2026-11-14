@@ -386,7 +386,7 @@ jobs:
           ls -alh "$REDLIB_BIN_PATH"
           cd "$(dirname "$REDLIB_BIN_PATH")"
           sha256sum --tag "$(basename "$REDLIB_BIN_PATH")" | tee "$REDLIB_BIN_HASH_PATH"
-          ldd --version | head -n1 || true
+          ldd --version | sed -n '1p'
           ldd "$REDLIB_BIN_PATH" || true
           "$REDLIB_BIN_PATH" --help || true
 
